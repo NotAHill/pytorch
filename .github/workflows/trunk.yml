@@ -550,3 +550,61 @@ jobs:
       python-version: "3.11"
       compiler: gcc13
     secrets: inherit
+
+  linux-jammy-aarch64-py3_11-clang20-build:
+    if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' linux-jammy-aarch64-py3.11-clang20 ') }}
+    name: linux-jammy-aarch64-py3.11-clang20
+    uses: ./.github/workflows/_linux-build.yml
+    needs:
+      - get-label-type
+      - job-filter
+    with:
+      runner_prefix: ${{ needs.get-label-type.outputs.label-type }}
+      lf_runners: ${{ needs.get-label-type.outputs.lf-runners }}
+      runner: "l-arm64g4-16-62"
+      build-environment: linux-jammy-aarch64-py3.11-clang20
+      docker-image-name: ci-image:pytorch-linux-jammy-aarch64-py3.11-clang20
+      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
+      allow-reuse-old-whl: false
+      # Exercise both SVE256 (Graviton3) and the Graviton4 CPU dispatch paths.
+      test-matrix: |
+        { include: [
+          { config: "default", shard: 1, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g3-16-62" },
+          { config: "default", shard: 2, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g3-16-62" },
+          { config: "default", shard: 3, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g3-16-62" },
+          { config: "default", shard: 4, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g3-16-62" },
+          { config: "default", shard: 5, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g3-16-62" },
+          { config: "default", shard: 6, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g3-16-62" },
+          { config: "default", shard: 7, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g3-16-62" },
+          { config: "default", shard: 8, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g3-16-62" },
+          { config: "default", shard: 1, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g4-16-62" },
+          { config: "default", shard: 2, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g4-16-62" },
+          { config: "default", shard: 3, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g4-16-62" },
+          { config: "default", shard: 4, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g4-16-62" },
+          { config: "default", shard: 5, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g4-16-62" },
+          { config: "default", shard: 6, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g4-16-62" },
+          { config: "default", shard: 7, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g4-16-62" },
+          { config: "default", shard: 8, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}l-arm64g4-16-62" },
+        ]}
+      python-version: "3.11"
+      compiler: clang20
+    secrets: inherit
+
+  linux-jammy-aarch64-py3_11-clang20-test:
+    if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' linux-jammy-aarch64-py3.11-clang20 ') }}
+    name: linux-jammy-aarch64-py3.11-clang20
+    uses: ./.github/workflows/_linux-test.yml
+    needs:
+      - linux-jammy-aarch64-py3_11-clang20-build
+      - get-label-type
+      - job-filter
+    with:
+      build-environment: ${{ needs.linux-jammy-aarch64-py3_11-clang20-build.outputs.build-environment }}
+      docker-image: ${{ needs.linux-jammy-aarch64-py3_11-clang20-build.outputs.docker-image }}
+      test-matrix: ${{ needs.linux-jammy-aarch64-py3_11-clang20-build.outputs.test-matrix }}
+      tests-to-include: ${{ github.event.inputs.tests-to-include || '' }}
+      force-keep-going: true
+      force-no-td: true
+      python-version: "3.11"
+      compiler: clang20
+    secrets: inherit
